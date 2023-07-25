@@ -8,6 +8,10 @@
 # dependency directories
 node_modules/
 
+# config files that typically contain sensitive information
 idp-cli.toml
 idp-cli.json
 idp-cli.yaml
+
+# build artifacts
+dist/
