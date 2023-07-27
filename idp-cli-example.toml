@@ -5,7 +5,7 @@
 idp = "myidp"
 
 # -------------------------------------------------------------------------------------------------
-# These parameters are required for the "multiregion setup" and "multiregion failover" commands.
+# These parameters are required for multiregion commands.
 
 # Operation environment, used for Terraform workspace name. Default is "prod"
 env = "prod"
@@ -20,7 +20,7 @@ org = "my-tfc-org"
 tfc-token = ""
 
 # -------------------------------------------------------------------------------------------------
-# These parameters are required for the "dns" commands.
+# These additional parameters are required for the "dns" commands.
 
 domain-name = "example.net"
 cloudflare-token = ""
