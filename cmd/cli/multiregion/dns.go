@@ -107,34 +107,40 @@ func (d *DnsCommand) getEcsCnameValues(pFlags PersistentFlags) AlbDnsValues {
 
 func (d *DnsCommand) setDnsRecordValues(idpKey string, failback bool) {
 	primaryOrSecondary := "secondary"
+	internalAlb := d.dnsValues.secondaryInternal
+	externalAlb := d.dnsValues.secondaryExternal
 	if failback {
 		primaryOrSecondary = "primary"
+		internalAlb = d.dnsValues.primaryInternal
+		externalAlb = d.dnsValues.primaryExternal
 	}
+
 	fmt.Printf("Setting DNS records to %s...", primaryOrSecondary)
 
 	dnsRecords := []struct {
-		name        string
-		optionValue string
+		name         string
+		optionValue  string
+		defaultValue string
 	}{
 		// "mfa-api" is the TOTP API, also known as serverless-mfa-api
-		{"mfa-api", "mfa-api-value"},
+		{"mfa-api", "mfa-api-value", ""},
 
 		// "twosv-api" is the Webauthn API, also known as serverless-mfa-api-go
-		{"twosv-api", "twosv-api-value"},
+		{"twosv-api", "twosv-api-value", ""},
 
 		// "support-bot" is the idp-support-bot API that is configured in the Slack API dashboard
-		{"sherlock", "support-bot-value"},
+		{"sherlock", "support-bot-value", ""},
 
 		// ECS services
-		{idpKey + "-email-service", "email-service-value"},
-		{idpKey + "-id-broker", "id-broker-value"},
-		{idpKey + "-pw-api", "pw-api-value"},
-		{idpKey + "-ssp", "ssp-value"},
-		{idpKey + "-id-sync", "id-sync-value"},
+		{idpKey + "-email-service", "email-service-value", internalAlb},
+		{idpKey + "-id-broker", "id-broker-value", internalAlb},
+		{idpKey + "-pw-api", "pw-api-value", externalAlb},
+		{idpKey + "-ssp", "ssp-value", externalAlb},
+		{idpKey + "-id-sync", "id-sync-value", externalAlb},
 	}
 
 	for _, record := range dnsRecords {
-		value := getOption(record.optionValue, "")
+		value := getOption(record.optionValue, record.defaultValue)
 		d.setCloudflareCname(record.name, value)
 	}
 }
