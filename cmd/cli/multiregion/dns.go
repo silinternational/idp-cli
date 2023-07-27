@@ -60,7 +60,7 @@ func runDnsCommand(failback bool) {
 		clusterWorkspaceName = clusterSecondaryWorkspace(pFlags)
 	}
 
-	dnsValues := d.getCnameValuesFromTfc(clusterWorkspaceName)
+	dnsValues := d.getAlbDnsValuesFromTfc(clusterWorkspaceName)
 
 	d.setDnsRecordValues(pFlags.idp, dnsValues, failback)
 }
@@ -179,7 +179,7 @@ func (d *DnsCommand) setCloudflareCname(name, value string) {
 	}
 }
 
-func (d *DnsCommand) getCnameValuesFromTfc(workspaceName string) (values AlbDnsValues) {
+func (d *DnsCommand) getAlbDnsValuesFromTfc(workspaceName string) (values AlbDnsValues) {
 	config := &tfe.Config{
 		Token:             d.tfcToken,
 		RetryServerErrors: true,
