@@ -105,7 +105,7 @@ func (d *DnsCommand) setDnsRecordValues(idpKey string, dnsValues AlbDnsValues, f
 		primaryOrSecondary = "primary"
 	}
 
-	fmt.Printf("Setting DNS records to %s...", primaryOrSecondary)
+	fmt.Printf("Setting DNS records to %s...\n", primaryOrSecondary)
 
 	dnsRecords := []struct {
 		name         string
@@ -159,7 +159,7 @@ func (d *DnsCommand) setCloudflareCname(name, value string) {
 	}
 
 	if d.testMode {
-		fmt.Println("  test mode: skipping API call")
+		fmt.Println("  read-only mode: skipping API call")
 		return
 	}
 
