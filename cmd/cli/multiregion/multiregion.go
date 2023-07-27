@@ -17,6 +17,7 @@ const (
 	flagEnv               = "env"
 	flagRegion2           = "region2"
 	flagTfcToken          = "tfc-token"
+	flagOrgAlternate      = "org-alternate"
 	flagTfcTokenAlternate = "tfc-token-alternate"
 )
 
@@ -57,6 +58,12 @@ func SetupMultiregionCmd(parentCommand *cobra.Command) {
 		outputFlagError(multiregionCmd, err)
 	}
 
+	var orgAlt string
+	multiregionCmd.PersistentFlags().StringVar(&orgAlt, flagOrgAlternate, "", "Alternate Terraform Cloud organization")
+	if err := viper.BindPFlag(flagOrgAlternate, multiregionCmd.PersistentFlags().Lookup(flagOrgAlternate)); err != nil {
+		outputFlagError(multiregionCmd, err)
+	}
+
 	var tfcTokenAlt string
 	multiregionCmd.PersistentFlags().StringVar(&tfcTokenAlt, flagTfcTokenAlternate, "", "Alternate token for Terraform Cloud")
 	if err := viper.BindPFlag(flagTfcTokenAlternate, multiregionCmd.PersistentFlags().Lookup(flagTfcTokenAlternate)); err != nil {
@@ -73,6 +80,7 @@ type PersistentFlags struct {
 	env             string
 	idp             string
 	org             string
+	orgAlt          string
 	readOnlyMode    bool
 	secondaryRegion string
 	tfcToken        string
@@ -80,15 +88,20 @@ type PersistentFlags struct {
 }
 
 func getPersistentFlags() PersistentFlags {
-	return PersistentFlags{
+	pFlags := PersistentFlags{
 		env:             getRequiredParam(flagEnv),
 		idp:             getRequiredParam("idp"),
 		org:             getRequiredParam("org"),
 		tfcToken:        getRequiredParam(flagTfcToken),
-		tfcTokenAlt:     viper.GetString(flagTfcTokenAlternate),
 		secondaryRegion: getRequiredParam(flagRegion2),
 		readOnlyMode:    viper.GetBool("read-only-mode"),
+		tfcTokenAlt:     getOption(flagTfcTokenAlternate, ""),
+		orgAlt:          getOption(flagOrgAlternate, viper.GetString("org")),
 	}
+	if pFlags.orgAlt == "" {
+		pFlags.orgAlt = pFlags.org
+	}
+	return pFlags
 }
 
 func getRequiredParam(key string) string {
