@@ -185,7 +185,8 @@ func (d *DnsCommand) getAlbDnsValuesFromTfc(workspaceName string) (values AlbDns
 
 	client, err := tfe.NewClient(config)
 	if err != nil {
-		log.Fatalf("Error creating Terraform client: %s", err)
+		fmt.Printf("Error creating Terraform client: %s", err)
+		return
 	}
 
 	ctx := context.Background()
