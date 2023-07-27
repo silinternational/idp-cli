@@ -192,12 +192,14 @@ func (d *DnsCommand) getAlbDnsValuesFromTfc(workspaceName string) (values AlbDns
 
 	w, err := client.Workspaces.Read(ctx, d.tfcOrg, workspaceName)
 	if err != nil {
-		log.Fatalf("Error reading Terraform workspace %s: %s", workspaceName, err)
+		fmt.Printf("Error reading Terraform workspace %s: %s", workspaceName, err)
+		return
 	}
 
 	outputs, err := client.StateVersionOutputs.ReadCurrent(ctx, w.ID)
 	if err != nil {
-		log.Fatalf("Error reading Terraform state outputs on workspace %s: %s", workspaceName, err)
+		fmt.Printf("Error reading Terraform state outputs on workspace %s: %s", workspaceName, err)
+		return
 	}
 
 	for _, item := range outputs.Items {
