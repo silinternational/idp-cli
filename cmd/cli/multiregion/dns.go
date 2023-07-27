@@ -16,12 +16,13 @@ import (
 )
 
 type DnsCommand struct {
-	cfClient   *cloudflare.API
-	cfZone     *cloudflare.ResourceContainer
-	domainName string
-	tfcOrg     string
-	tfcToken   string
-	testMode   bool
+	cfClient    *cloudflare.API
+	cfZone      *cloudflare.ResourceContainer
+	domainName  string
+	tfcOrg      string
+	tfcToken    string
+	tfcTokenAlt string
+	testMode    bool
 }
 
 type AlbDnsValues struct {
@@ -67,7 +68,7 @@ func runDnsCommand(failback bool) {
 func newDnsCommand(pFlags PersistentFlags) *DnsCommand {
 	d := DnsCommand{
 		testMode:   pFlags.readOnlyMode,
-		domainName: viper.GetString("domain-name"),
+		domainName: viper.GetString(flagDomainName),
 	}
 
 	if d.domainName == "" {
@@ -93,6 +94,7 @@ func newDnsCommand(pFlags PersistentFlags) *DnsCommand {
 	d.cfZone = cloudflare.ZoneIdentifier(zoneID)
 
 	d.tfcToken = pFlags.tfcToken
+	d.tfcTokenAlt = pFlags.tfcTokenAlt
 	d.tfcOrg = pFlags.org
 
 	return &d
@@ -178,26 +180,15 @@ func (d *DnsCommand) setCloudflareCname(name, value string) {
 }
 
 func (d *DnsCommand) getAlbDnsValuesFromTfc(workspaceName string) (values AlbDnsValues) {
-	config := &tfe.Config{
-		Token:             d.tfcToken,
-		RetryServerErrors: true,
-	}
-
-	client, err := tfe.NewClient(config)
-	if err != nil {
-		fmt.Printf("Error creating Terraform client: %s", err)
-		return
-	}
-
 	ctx := context.Background()
 
-	w, err := client.Workspaces.Read(ctx, d.tfcOrg, workspaceName)
+	workspaceID, client, err := d.findTfcWorkspace(ctx, workspaceName)
 	if err != nil {
-		fmt.Printf("Error reading Terraform workspace %s: %s", workspaceName, err)
+		fmt.Printf("Failed to get DNS values: %s\n  Will use DNS config values if provided.\n", err)
 		return
 	}
 
-	outputs, err := client.StateVersionOutputs.ReadCurrent(ctx, w.ID)
+	outputs, err := client.StateVersionOutputs.ReadCurrent(ctx, workspaceID)
 	if err != nil {
 		fmt.Printf("Error reading Terraform state outputs on workspace %s: %s", workspaceName, err)
 		return
@@ -211,5 +202,47 @@ func (d *DnsCommand) getAlbDnsValuesFromTfc(workspaceName string) (values AlbDns
 			values.internal = item.Value.(string)
 		}
 	}
+	return
+}
+
+func (d *DnsCommand) findTfcWorkspace(ctx context.Context, workspaceName string) (id string, client *tfe.Client, err error) {
+	config := &tfe.Config{
+		Token:             d.tfcToken,
+		RetryServerErrors: true,
+	}
+
+	client, err = tfe.NewClient(config)
+	if err != nil {
+		err = fmt.Errorf("error creating Terraform client: %s", err)
+		return
+	}
+
+	w, err := client.Workspaces.Read(ctx, d.tfcOrg, workspaceName)
+	if err == nil {
+		id = w.ID
+		return
+	}
+
+	if d.tfcTokenAlt == "" {
+		err = fmt.Errorf("error reading Terraform workspace %s: %s", workspaceName, err)
+		return
+	}
+
+	fmt.Printf("Workspace %s not found using %s, trying %s\n", workspaceName, flagTfcToken, flagTfcTokenAlternate)
+
+	config.Token = d.tfcTokenAlt
+	client, err = tfe.NewClient(config)
+	if err != nil {
+		err = fmt.Errorf("error creating alternate Terraform client: %s", err)
+		return
+	}
+
+	w, err = client.Workspaces.Read(ctx, d.tfcOrg, workspaceName)
+	if err != nil {
+		err = fmt.Errorf("error reading Terraform workspace %s using %s: %s", workspaceName, flagTfcTokenAlternate, err)
+		return
+	}
+
+	id = w.ID
 	return
 }
