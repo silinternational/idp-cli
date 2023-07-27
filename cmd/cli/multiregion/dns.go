@@ -203,13 +203,11 @@ func (d *DnsCommand) getCnameValuesFromTfc(workspaceName string) (values AlbDnsV
 	}
 
 	for _, item := range outputs.Items {
-		s := item.Value.(string)
-
 		switch item.Name {
 		case "alb_dns_name":
-			values.external = s
+			values.external = item.Value.(string)
 		case "internal_alb_dns_name":
-			values.internal = s
+			values.internal = item.Value.(string)
 		}
 	}
 	return
