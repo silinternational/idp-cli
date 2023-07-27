@@ -26,10 +26,8 @@ type DnsCommand struct {
 }
 
 type AlbDnsValues struct {
-	primaryInternal   string
-	primaryExternal   string
-	secondaryInternal string
-	secondaryExternal string
+	internal string
+	external string
 }
 
 func InitDnsCmd(parentCmd *cobra.Command) {
@@ -53,9 +51,18 @@ func InitDnsCmd(parentCmd *cobra.Command) {
 func runDnsCommand(failback bool) {
 	pFlags := getPersistentFlags()
 
-	f := newDnsCommand(pFlags)
+	d := newDnsCommand(pFlags)
 
-	f.setDnsRecordValues(pFlags.idp, failback)
+	var clusterWorkspaceName string
+	if failback {
+		clusterWorkspaceName = clusterWorkspace(pFlags)
+	} else {
+		clusterWorkspaceName = clusterSecondaryWorkspace(pFlags)
+	}
+
+	dnsValues := d.getCnameValuesFromTfc(clusterWorkspaceName)
+
+	d.setDnsRecordValues(pFlags.idp, dnsValues, failback)
 }
 
 func newDnsCommand(pFlags PersistentFlags) *DnsCommand {
@@ -88,31 +95,14 @@ func newDnsCommand(pFlags PersistentFlags) *DnsCommand {
 
 	d.tfcToken = pFlags.tfcToken
 	d.tfcOrg = pFlags.org
-	d.dnsValues = d.getEcsCnameValues(pFlags)
 
 	return &d
 }
 
-func (d *DnsCommand) getEcsCnameValues(pFlags PersistentFlags) AlbDnsValues {
-	primaryClusterWorkspace := clusterWorkspace(pFlags)
-	secondaryClusterWorkspace := clusterSecondaryWorkspace(pFlags)
-
-	return AlbDnsValues{
-		primaryInternal:   d.getCnameValueFromTfc(primaryClusterWorkspace, "internal_alb_dns_name"),
-		primaryExternal:   d.getCnameValueFromTfc(primaryClusterWorkspace, "alb_dns_name"),
-		secondaryInternal: d.getCnameValueFromTfc(secondaryClusterWorkspace, "internal_alb_dns_name"),
-		secondaryExternal: d.getCnameValueFromTfc(secondaryClusterWorkspace, "alb_dns_name"),
-	}
-}
-
-func (d *DnsCommand) setDnsRecordValues(idpKey string, failback bool) {
+func (d *DnsCommand) setDnsRecordValues(idpKey string, dnsValues AlbDnsValues, failback bool) {
 	primaryOrSecondary := "secondary"
-	internalAlb := d.dnsValues.secondaryInternal
-	externalAlb := d.dnsValues.secondaryExternal
 	if failback {
 		primaryOrSecondary = "primary"
-		internalAlb = d.dnsValues.primaryInternal
-		externalAlb = d.dnsValues.primaryExternal
 	}
 
 	fmt.Printf("Setting DNS records to %s...", primaryOrSecondary)
@@ -132,11 +122,11 @@ func (d *DnsCommand) setDnsRecordValues(idpKey string, failback bool) {
 		{"sherlock", "support-bot-value", ""},
 
 		// ECS services
-		{idpKey + "-email-service", "email-service-value", internalAlb},
-		{idpKey + "-id-broker", "id-broker-value", internalAlb},
-		{idpKey + "-pw-api", "pw-api-value", externalAlb},
-		{idpKey + "-ssp", "ssp-value", externalAlb},
-		{idpKey + "-id-sync", "id-sync-value", externalAlb},
+		{idpKey + "-email-service", "email-service-value", dnsValues.internal},
+		{idpKey + "-id-broker", "id-broker-value", dnsValues.internal},
+		{idpKey + "-pw-api", "pw-api-value", dnsValues.external},
+		{idpKey + "-ssp", "ssp-value", dnsValues.external},
+		{idpKey + "-id-sync", "id-sync-value", dnsValues.external},
 	}
 
 	for _, record := range dnsRecords {
@@ -189,7 +179,7 @@ func (d *DnsCommand) setCloudflareCname(name, value string) {
 	}
 }
 
-func (d *DnsCommand) getCnameValueFromTfc(workspaceName string, name string) string {
+func (d *DnsCommand) getCnameValuesFromTfc(workspaceName string) (values AlbDnsValues) {
 	config := &tfe.Config{
 		Token:             d.tfcToken,
 		RetryServerErrors: true,
@@ -209,18 +199,18 @@ func (d *DnsCommand) getCnameValueFromTfc(workspaceName string, name string) str
 
 	outputs, err := client.StateVersionOutputs.ReadCurrent(ctx, w.ID)
 	if err != nil {
-		return ""
+		return
 	}
 
 	for _, item := range outputs.Items {
-		if item.Name == name {
-			s, ok := item.Value.(string)
-			if !ok {
-				log.Fatalf("output %s is not a string", name)
-			}
-			return s
+		s := item.Value.(string)
+
+		switch item.Name {
+		case "alb_dns_name":
+			values.external = s
+		case "internal_alb_dns_name":
+			values.internal = s
 		}
 	}
-	log.Fatalf("output %s not found", name)
-	return ""
+	return
 }
