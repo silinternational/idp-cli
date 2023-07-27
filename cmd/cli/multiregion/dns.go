@@ -21,7 +21,6 @@ type DnsCommand struct {
 	domainName string
 	tfcOrg     string
 	tfcToken   string
-	dnsValues  AlbDnsValues
 	testMode   bool
 }
 
@@ -100,12 +99,11 @@ func newDnsCommand(pFlags PersistentFlags) *DnsCommand {
 }
 
 func (d *DnsCommand) setDnsRecordValues(idpKey string, dnsValues AlbDnsValues, failback bool) {
-	primaryOrSecondary := "secondary"
 	if failback {
-		primaryOrSecondary = "primary"
+		fmt.Println("Setting DNS records to primary region...")
+	} else {
+		fmt.Println("Setting DNS records to secondary region...")
 	}
-
-	fmt.Printf("Setting DNS records to %s...\n", primaryOrSecondary)
 
 	dnsRecords := []struct {
 		name         string
@@ -187,19 +185,19 @@ func (d *DnsCommand) getAlbDnsValuesFromTfc(workspaceName string) (values AlbDns
 
 	client, err := tfe.NewClient(config)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error creating Terraform client: %s", err)
 	}
 
 	ctx := context.Background()
 
 	w, err := client.Workspaces.Read(ctx, d.tfcOrg, workspaceName)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error reading Terraform workspace %s: %s", workspaceName, err)
 	}
 
 	outputs, err := client.StateVersionOutputs.ReadCurrent(ctx, w.ID)
 	if err != nil {
-		return
+		log.Fatalf("Error reading Terraform state outputs on workspace %s: %s", workspaceName, err)
 	}
 
 	for _, item := range outputs.Items {
