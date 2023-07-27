@@ -20,10 +20,16 @@ org = "my-tfc-org"
 tfc-token = ""
 
 # -------------------------------------------------------------------------------------------------
-# These additional parameters are required for the "dns" commands.
+# These additional parameters are for the "multiregion dns" command.
 
+# "domain-name" is required
 domain-name = "example.net"
+
+# "cloudflare-token" is required and must have edit permission on the domain name specified in "domain-name"
 cloudflare-token = ""
+
+# The following are the values to set DNS CNAME records. If any DNS value is omitted, the "multiregion dns" command
+# will skip that record update.
 
 # "mfa-api" is the TOTP API, also known as serverless-mfa-api.
 mfa-api-value = "abcde01234.execute-api.us-west-2.amazonaws.com"
