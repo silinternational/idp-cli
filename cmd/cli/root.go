@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/silinternational/idp-in-a-box/cmd/cli/multiregion"
+	"github.com/silinternational/idp-cli/cmd/cli/multiregion"
 )
 
 const requiredPrefix = "required - "
@@ -21,7 +21,7 @@ var configFile string
 
 func Execute() {
 	rootCmd := &cobra.Command{
-		Use:   "idp",
+		Use:   "idp-cli",
 		Short: "idp-in-a-box CLI",
 		Long: `idp is a CLI tool for the silinternational/idp-in-a-box system.
 It can be used to check the status of the IdP. It can also be used to establish secondary resources
