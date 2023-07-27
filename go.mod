@@ -1,4 +1,4 @@
-module github.com/silinternational/idp-in-a-box
+module github.com/silinternational/idp-cli
 
 go 1.20
 

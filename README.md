@@ -1,4 +1,4 @@
-# idp-in-a-box
+# idp-cli
 CLI Tool for the IdP-in-a-Box service.
 
 ## CLI
