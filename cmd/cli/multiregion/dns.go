@@ -122,11 +122,11 @@ func (d *DnsCommand) setDnsRecordValues(idpKey string, dnsValues AlbDnsValues, f
 		{"sherlock", "support-bot-value", ""},
 
 		// ECS services
-		{idpKey + "-email-service", "email-service-value", dnsValues.internal},
-		{idpKey + "-id-broker", "id-broker-value", dnsValues.internal},
+		{idpKey + "-email", "email-service-value", dnsValues.internal},
+		{idpKey + "-broker", "id-broker-value", dnsValues.internal},
 		{idpKey + "-pw-api", "pw-api-value", dnsValues.external},
-		{idpKey + "-ssp", "ssp-value", dnsValues.external},
-		{idpKey + "-id-sync", "id-sync-value", dnsValues.external},
+		{idpKey, "ssp-value", dnsValues.external},
+		{idpKey + "-sync", "id-sync-value", dnsValues.external},
 	}
 
 	for _, record := range dnsRecords {
