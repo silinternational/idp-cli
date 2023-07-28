@@ -107,9 +107,9 @@ func (d *DnsCommand) setDnsRecordValues(idpKey string, dnsValues DnsValues) {
 	}
 
 	dnsRecords := []struct {
-		name        string
-		optionValue string
-		tfcValue    string
+		name      string
+		valueFlag string
+		tfcValue  string
 	}{
 		// "mfa-api" is the TOTP API, also known as serverless-mfa-api
 		{"mfa-api", "mfa-api-value", dnsValues.mfa},
@@ -129,16 +129,16 @@ func (d *DnsCommand) setDnsRecordValues(idpKey string, dnsValues DnsValues) {
 	}
 
 	for _, record := range dnsRecords {
-		value := getDnsValue(record.optionValue, record.tfcValue)
+		value := getDnsValue(record.valueFlag, record.tfcValue)
 		d.setCloudflareCname(record.name, value)
 	}
 }
 
-func getDnsValue(key, tfcValue string) string {
+func getDnsValue(valueFlag, tfcValue string) string {
 	if tfcValue != "" {
 		return tfcValue
 	}
-	return viper.GetString(key)
+	return viper.GetString(valueFlag)
 }
 
 func (d *DnsCommand) setCloudflareCname(name, value string) {
@@ -201,19 +201,19 @@ func (d *DnsCommand) getDnsValuesFromTfc(pFlags PersistentFlags) (values DnsValu
 
 	bot := "idp-support-bot-prod"
 	if pFlags.env != "prod" {
-		bot = "idp-support-bot-dev"
+		bot = "idp-support-bot-dev" // TODO: consider renaming the workspace name so this can be simplified
 	}
 	values.bot = d.getLambdaDnsValueFromTfc(ctx, bot)
 
 	twosv := "serverless-mfa-api-go-prod"
 	if pFlags.env != "prod" {
-		twosv = "serverless-mfa-api-go-dev"
+		twosv = "serverless-mfa-api-go-dev" // TODO: consider renaming the workspace name so this can be simplified
 	}
 	values.twosv = d.getLambdaDnsValueFromTfc(ctx, twosv)
 
 	mfa := "serverless-mfa-api-prod"
 	if pFlags.env != "prod" {
-		mfa = "serverless-mfa-api-dev"
+		mfa = "serverless-mfa-api-dev" // TODO: consider renaming the workspace name so this can be simplified
 	}
 	values.mfa = d.getLambdaDnsValueFromTfc(ctx, mfa)
 	return
@@ -277,6 +277,8 @@ func (d *DnsCommand) getTfcOutputFromWorkspace(ctx context.Context, workspaceNam
 	return ""
 }
 
+// findTfcWorkspace looks for a workspace by name in two different Terraform Cloud accounts and returns
+// the workspace ID and an API client for the account where the workspace was found
 func (d *DnsCommand) findTfcWorkspace(ctx context.Context, workspaceName string) (id string, client *tfe.Client, err error) {
 	config := &tfe.Config{
 		Token:             d.tfcToken,
