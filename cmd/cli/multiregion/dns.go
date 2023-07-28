@@ -207,9 +207,9 @@ func (d *DnsCommand) getAlbDnsValuesFromTfc(workspaceName string) (values AlbDns
 		itemValue, _ := item.Value.(string)
 		switch item.Name {
 		case "alb_dns_name":
-			external = itemValue
+			values.external = itemValue
 		case "internal_alb_dns_name":
-			internal = itemValue
+			values.internal = itemValue
 		}
 	}
 	return
