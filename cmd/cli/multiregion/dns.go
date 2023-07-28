@@ -10,6 +10,7 @@ import (
 	"log"
 
 	"github.com/cloudflare/cloudflare-go"
+	"github.com/hashicorp/go-tfe"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -18,26 +19,49 @@ type DnsCommand struct {
 	cfClient   *cloudflare.API
 	cfZone     *cloudflare.ResourceContainer
 	domainName string
+	tfcOrg     string
+	tfcToken   string
 	testMode   bool
 }
 
-func InitDnsCmd(parentCmd *cobra.Command) {
-	parentCmd.AddCommand(&cobra.Command{
-		Use:   "dns",
-		Short: "DNS Failover and Failback",
-		Long:  `Configure DNS CNAME values for primary or secondary region hostnames`,
-		Run: func(cmd *cobra.Command, args []string) {
-			runDnsCommand()
-		},
-	})
+type AlbDnsValues struct {
+	internal string
+	external string
 }
 
-func runDnsCommand() {
+func InitDnsCmd(parentCmd *cobra.Command) {
+	var failback bool
+
+	cmd := &cobra.Command{
+		Use:   "dns",
+		Short: "DNS Failover and Failback",
+		Long:  `Configure DNS CNAME values for primary or secondary region hostnames. Default is failover, use --failback to switch back to the primary region.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			runDnsCommand(failback)
+		},
+	}
+	parentCmd.AddCommand(cmd)
+
+	cmd.PersistentFlags().BoolVar(&failback, "failback", false,
+		`set DNS records to switch back to primary`,
+	)
+}
+
+func runDnsCommand(failback bool) {
 	pFlags := getPersistentFlags()
 
-	f := newDnsCommand(pFlags)
+	d := newDnsCommand(pFlags)
 
-	f.setDnsToSecondary(pFlags.idp)
+	var clusterWorkspaceName string
+	if failback {
+		clusterWorkspaceName = clusterWorkspace(pFlags)
+	} else {
+		clusterWorkspaceName = clusterSecondaryWorkspace(pFlags)
+	}
+
+	dnsValues := d.getAlbDnsValuesFromTfc(clusterWorkspaceName)
+
+	d.setDnsRecordValues(pFlags.idp, dnsValues, failback)
 }
 
 func newDnsCommand(pFlags PersistentFlags) *DnsCommand {
@@ -68,38 +92,44 @@ func newDnsCommand(pFlags PersistentFlags) *DnsCommand {
 	fmt.Printf("Using domain name %s with ID %s\n", d.domainName, zoneID)
 	d.cfZone = cloudflare.ZoneIdentifier(zoneID)
 
+	d.tfcToken = pFlags.tfcToken
+	d.tfcOrg = pFlags.org
+
 	return &d
 }
 
-func (d *DnsCommand) setDnsToSecondary(idpKey string) {
-	fmt.Println("Setting DNS records to secondary...")
+func (d *DnsCommand) setDnsRecordValues(idpKey string, dnsValues AlbDnsValues, failback bool) {
+	if failback {
+		fmt.Println("Setting DNS records to primary region...")
+	} else {
+		fmt.Println("Setting DNS records to secondary region...")
+	}
 
 	dnsRecords := []struct {
-		optionName  string
-		defaultName string
-		optionValue string
+		name         string
+		optionValue  string
+		defaultValue string
 	}{
 		// "mfa-api" is the TOTP API, also known as serverless-mfa-api
-		{"mfa-api-name", "mfa-api", "mfa-api-value"},
+		{"mfa-api", "mfa-api-value", ""},
 
 		// "twosv-api" is the Webauthn API, also known as serverless-mfa-api-go
-		{"twosv-api-name", "twosv-api", "twosv-api-value"},
+		{"twosv-api", "twosv-api-value", ""},
 
 		// "support-bot" is the idp-support-bot API that is configured in the Slack API dashboard
-		{"support-bot-name", "sherlock", "support-bot-value"},
+		{"sherlock", "support-bot-value", ""},
 
 		// ECS services
-		{"email-service-name", idpKey + "-email-service", "email-service-value"},
-		{"id-broker-name", idpKey + "-id-broker", "id-broker-value"},
-		{"pw-api-name", idpKey + "-pw-api", "pw-api-value"},
-		{"ssp-name", idpKey + "-ssp", "ssp-value"},
-		{"id-sync-name", idpKey + "-id-sync", "id-sync-value"},
+		{idpKey + "-email", "email-service-value", dnsValues.internal},
+		{idpKey + "-broker", "id-broker-value", dnsValues.internal},
+		{idpKey + "-pw-api", "pw-api-value", dnsValues.external},
+		{idpKey, "ssp-value", dnsValues.external},
+		{idpKey + "-sync", "id-sync-value", dnsValues.external},
 	}
 
 	for _, record := range dnsRecords {
-		name := getOption(record.optionName, record.defaultName)
-		value := getOption(record.optionValue, "")
-		d.setCloudflareCname(name, value)
+		value := getOption(record.optionValue, record.defaultValue)
+		d.setCloudflareCname(record.name, value)
 	}
 }
 
@@ -127,7 +157,7 @@ func (d *DnsCommand) setCloudflareCname(name, value string) {
 	}
 
 	if d.testMode {
-		fmt.Println("  test mode: skipping API call")
+		fmt.Println("  read-only mode: skipping API call")
 		return
 	}
 
@@ -145,4 +175,42 @@ func (d *DnsCommand) setCloudflareCname(name, value string) {
 	if err != nil {
 		log.Fatalf("error updating DNS record %s: %s", name, err)
 	}
+}
+
+func (d *DnsCommand) getAlbDnsValuesFromTfc(workspaceName string) (values AlbDnsValues) {
+	config := &tfe.Config{
+		Token:             d.tfcToken,
+		RetryServerErrors: true,
+	}
+
+	client, err := tfe.NewClient(config)
+	if err != nil {
+		fmt.Printf("Error creating Terraform client: %s", err)
+		return
+	}
+
+	ctx := context.Background()
+
+	w, err := client.Workspaces.Read(ctx, d.tfcOrg, workspaceName)
+	if err != nil {
+		fmt.Printf("Error reading Terraform workspace %s: %s", workspaceName, err)
+		return
+	}
+
+	outputs, err := client.StateVersionOutputs.ReadCurrent(ctx, w.ID)
+	if err != nil {
+		fmt.Printf("Error reading Terraform state outputs on workspace %s: %s", workspaceName, err)
+		return
+	}
+
+	for _, item := range outputs.Items {
+		itemValue, _ := item.Value.(string)
+		switch item.Name {
+		case "alb_dns_name":
+			values.external = itemValue
+		case "internal_alb_dns_name":
+			values.internal = itemValue
+		}
+	}
+	return
 }
