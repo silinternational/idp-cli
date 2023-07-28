@@ -267,7 +267,9 @@ func (d *DnsCommand) getTfcOutputFromWorkspace(ctx context.Context, workspaceNam
 
 	for _, item := range outputs.Items {
 		if item.Name == outputName {
-			return item.Value.(string)
+			if itemValue, ok := item.Value.(string); ok {
+				return itemValue
+			}
 		}
 	}
 
