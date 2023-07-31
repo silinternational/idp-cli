@@ -200,19 +200,19 @@ func (d *DnsCommand) getDnsValuesFromTfc(pFlags PersistentFlags) (values DnsValu
 	values.albExternal = external
 
 	bot := "idp-support-bot-prod"
-	if pFlags.env != "prod" {
+	if pFlags.env != envProd {
 		bot = "idp-support-bot-dev" // TODO: consider renaming the workspace name so this can be simplified
 	}
 	values.bot = d.getLambdaDnsValueFromTfc(ctx, bot)
 
 	twosv := "serverless-mfa-api-go-prod"
-	if pFlags.env != "prod" {
+	if pFlags.env != envProd {
 		twosv = "serverless-mfa-api-go-dev" // TODO: consider renaming the workspace name so this can be simplified
 	}
 	values.twosv = d.getLambdaDnsValueFromTfc(ctx, twosv)
 
 	mfa := "serverless-mfa-api-prod"
-	if pFlags.env != "prod" {
+	if pFlags.env != envProd {
 		mfa = "serverless-mfa-api-dev" // TODO: consider renaming the workspace name so this can be simplified
 	}
 	values.mfa = d.getLambdaDnsValueFromTfc(ctx, mfa)
@@ -270,6 +270,7 @@ func (d *DnsCommand) getTfcOutputFromWorkspace(ctx context.Context, workspaceNam
 			if itemValue, ok := item.Value.(string); ok {
 				return itemValue
 			}
+			break
 		}
 	}
 

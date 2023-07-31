@@ -21,6 +21,8 @@ const (
 	flagTfcTokenAlternate = "tfc-token-alternate"
 )
 
+const envProd = "prod"
+
 func SetupMultiregionCmd(parentCommand *cobra.Command) {
 	multiregionCmd := &cobra.Command{
 		Use:   "multiregion",
@@ -41,7 +43,7 @@ func SetupMultiregionCmd(parentCommand *cobra.Command) {
 	}
 
 	var env string
-	multiregionCmd.PersistentFlags().StringVar(&env, flagEnv, "prod", "Execution environment")
+	multiregionCmd.PersistentFlags().StringVar(&env, flagEnv, envProd, "Execution environment")
 	if err := viper.BindPFlag(flagEnv, multiregionCmd.PersistentFlags().Lookup(flagEnv)); err != nil {
 		outputFlagError(multiregionCmd, err)
 	}
