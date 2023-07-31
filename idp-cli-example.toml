@@ -19,6 +19,10 @@ org = "my-tfc-org"
 # Terraform Cloud token.
 tfc-token = ""
 
+# Alternate Terraform org and token. If provided, the alternates will be used in case the primary fails.
+org-alternate = ""
+tfc-token-alternate = ""
+
 # -------------------------------------------------------------------------------------------------
 # These additional parameters are for the "multiregion dns" command.
 
