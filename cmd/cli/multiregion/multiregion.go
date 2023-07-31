@@ -100,9 +100,16 @@ func getPersistentFlags() PersistentFlags {
 		tfcTokenAlt:     getOption(flagTfcTokenAlternate, ""),
 		orgAlt:          getOption(flagOrgAlternate, viper.GetString("org")),
 	}
+
+	if pFlags.orgAlt != "" && pFlags.tfcTokenAlt == "" {
+		log.Fatalf("%[1]s was specified without %[2]s. Please include %[2]s or remove %[1]s.",
+			flagOrgAlternate, flagTfcTokenAlternate)
+	}
+
 	if pFlags.orgAlt == "" {
 		pFlags.orgAlt = pFlags.org
 	}
+
 	return pFlags
 }
 
