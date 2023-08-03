@@ -98,7 +98,7 @@ func getPersistentFlags() PersistentFlags {
 		secondaryRegion: getRequiredParam(flagRegion2),
 		readOnlyMode:    viper.GetBool("read-only-mode"),
 		tfcTokenAlt:     getOption(flagTfcTokenAlternate, ""),
-		orgAlt:          getOption(flagOrgAlternate, viper.GetString("org-alternate")),
+		orgAlt:          getOption(flagOrgAlternate, viper.GetString(flagOrgAlternate)),
 	}
 
 	if pFlags.orgAlt != "" && pFlags.tfcTokenAlt == "" {
