@@ -45,7 +45,7 @@ func runSetup() {
 
 	err := setRunTriggers(pFlags)
 	if err != nil {
-		log.Fatalf("Error: " + err.Error())
+		log.Fatalf("Error: %s", err)
 	}
 }
 
