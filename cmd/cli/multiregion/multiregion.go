@@ -12,6 +12,17 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	flagDomainName        = "domain-name"
+	flagEnv               = "env"
+	flagRegion2           = "region2"
+	flagTfcToken          = "tfc-token"
+	flagOrgAlternate      = "org-alternate"
+	flagTfcTokenAlternate = "tfc-token-alternate"
+)
+
+const envProd = "prod"
+
 func SetupMultiregionCmd(parentCommand *cobra.Command) {
 	multiregionCmd := &cobra.Command{
 		Use:   "multiregion",
@@ -26,26 +37,38 @@ func SetupMultiregionCmd(parentCommand *cobra.Command) {
 	InitStatusCmd(multiregionCmd)
 
 	var domainName string
-	multiregionCmd.PersistentFlags().StringVar(&domainName, "domain-name", "", "Domain name")
-	if err := viper.BindPFlag("domain-name", multiregionCmd.PersistentFlags().Lookup("domain-name")); err != nil {
+	multiregionCmd.PersistentFlags().StringVar(&domainName, flagDomainName, "", "Domain name")
+	if err := viper.BindPFlag(flagDomainName, multiregionCmd.PersistentFlags().Lookup(flagDomainName)); err != nil {
 		outputFlagError(multiregionCmd, err)
 	}
 
 	var env string
-	multiregionCmd.PersistentFlags().StringVar(&env, "env", "prod", "Execution environment (default: prod)")
-	if err := viper.BindPFlag("env", multiregionCmd.PersistentFlags().Lookup("env")); err != nil {
+	multiregionCmd.PersistentFlags().StringVar(&env, flagEnv, envProd, "Execution environment")
+	if err := viper.BindPFlag(flagEnv, multiregionCmd.PersistentFlags().Lookup(flagEnv)); err != nil {
 		outputFlagError(multiregionCmd, err)
 	}
 
 	var region2 string
-	multiregionCmd.PersistentFlags().StringVar(&region2, "region2", "", "Secondary AWS region")
-	if err := viper.BindPFlag("region2", multiregionCmd.PersistentFlags().Lookup("region2")); err != nil {
+	multiregionCmd.PersistentFlags().StringVar(&region2, flagRegion2, "", "Secondary AWS region")
+	if err := viper.BindPFlag(flagRegion2, multiregionCmd.PersistentFlags().Lookup(flagRegion2)); err != nil {
 		outputFlagError(multiregionCmd, err)
 	}
 
 	var tfcToken string
-	multiregionCmd.PersistentFlags().StringVar(&tfcToken, "tfc-token", "", "Token for Terraform Cloud authentication")
-	if err := viper.BindPFlag("tfc-token", multiregionCmd.PersistentFlags().Lookup("tfc-token")); err != nil {
+	multiregionCmd.PersistentFlags().StringVar(&tfcToken, flagTfcToken, "", "Token for Terraform Cloud authentication")
+	if err := viper.BindPFlag(flagTfcToken, multiregionCmd.PersistentFlags().Lookup(flagTfcToken)); err != nil {
+		outputFlagError(multiregionCmd, err)
+	}
+
+	var orgAlt string
+	multiregionCmd.PersistentFlags().StringVar(&orgAlt, flagOrgAlternate, "", "Alternate Terraform Cloud organization")
+	if err := viper.BindPFlag(flagOrgAlternate, multiregionCmd.PersistentFlags().Lookup(flagOrgAlternate)); err != nil {
+		outputFlagError(multiregionCmd, err)
+	}
+
+	var tfcTokenAlt string
+	multiregionCmd.PersistentFlags().StringVar(&tfcTokenAlt, flagTfcTokenAlternate, "", "Alternate token for Terraform Cloud")
+	if err := viper.BindPFlag(flagTfcTokenAlternate, multiregionCmd.PersistentFlags().Lookup(flagTfcTokenAlternate)); err != nil {
 		outputFlagError(multiregionCmd, err)
 	}
 }
@@ -59,20 +82,35 @@ type PersistentFlags struct {
 	env             string
 	idp             string
 	org             string
+	orgAlt          string
 	readOnlyMode    bool
 	secondaryRegion string
 	tfcToken        string
+	tfcTokenAlt     string
 }
 
 func getPersistentFlags() PersistentFlags {
-	return PersistentFlags{
-		env:             getRequiredParam("env"),
+	pFlags := PersistentFlags{
+		env:             getRequiredParam(flagEnv),
 		idp:             getRequiredParam("idp"),
 		org:             getRequiredParam("org"),
-		tfcToken:        getRequiredParam("tfc-token"),
-		secondaryRegion: getRequiredParam("region2"),
+		tfcToken:        getRequiredParam(flagTfcToken),
+		secondaryRegion: getRequiredParam(flagRegion2),
 		readOnlyMode:    viper.GetBool("read-only-mode"),
+		tfcTokenAlt:     getOption(flagTfcTokenAlternate, ""),
+		orgAlt:          getOption(flagOrgAlternate, viper.GetString(flagOrgAlternate)),
 	}
+
+	if pFlags.orgAlt != "" && pFlags.tfcTokenAlt == "" {
+		log.Fatalf("%[1]s was specified without %[2]s. Please include %[2]s or remove %[1]s.",
+			flagOrgAlternate, flagTfcTokenAlternate)
+	}
+
+	if pFlags.orgAlt == "" {
+		pFlags.orgAlt = pFlags.org
+	}
+
+	return pFlags
 }
 
 func getRequiredParam(key string) string {
