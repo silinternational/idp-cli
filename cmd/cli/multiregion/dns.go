@@ -249,33 +249,35 @@ func (d *DnsCommand) getLambdaDnsValueFromTfc(ctx context.Context, workspaceName
 	if d.failback {
 		outputName = "primary_region_domain_name"
 	}
-	return d.getTfcOutputFromWorkspace(ctx, workspaceName, outputName)
+	val, err := d.getTfcOutputFromWorkspace(ctx, workspaceName, outputName)
+	if err != nil {
+		fmt.Printf("Error: %s\n Will use config value if provided.\n", err)
+		return ""
+	}
+	return val
 }
 
-func (d *DnsCommand) getTfcOutputFromWorkspace(ctx context.Context, workspaceName, outputName string) string {
+func (d *DnsCommand) getTfcOutputFromWorkspace(ctx context.Context, workspaceName, outputName string) (string, error) {
 	workspaceID, client, err := d.findTfcWorkspace(ctx, workspaceName)
 	if err != nil {
-		fmt.Printf("Failed to get DNS value from %s: %s\n  Will use config value if provided.\n", workspaceName, err)
-		return ""
+		return "", fmt.Errorf("failed to get DNS value from %s: %w", workspaceName, err)
 	}
 
 	outputs, err := client.StateVersionOutputs.ReadCurrent(ctx, workspaceID)
 	if err != nil {
-		fmt.Printf("Error reading Terraform state outputs on workspace %s: %s", workspaceName, err)
-		return ""
+		return "", fmt.Errorf("error reading Terraform state outputs on workspace %s: %w", workspaceName, err)
 	}
 
 	for _, item := range outputs.Items {
 		if item.Name == outputName {
 			if itemValue, ok := item.Value.(string); ok {
-				return itemValue
+				return itemValue, nil
 			}
 			break
 		}
 	}
 
-	fmt.Printf("Value for %s not found in %s\n", outputName, workspaceName)
-	return ""
+	return "", fmt.Errorf("value for %s not found in %s\n", outputName, workspaceName)
 }
 
 // findTfcWorkspace looks for a workspace by name in two different Terraform Cloud accounts and returns
