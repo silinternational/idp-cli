@@ -36,7 +36,7 @@ func runSetup() {
 	deleteUnusedVariables(pFlags)
 	setSensitiveVariables(pFlags)
 
-	answer := simplePrompt(`Set remote consumers? Type "yes" if workspace-specific sharing is used.`)
+	answer := simplePrompt(`\nSet remote consumers? Type "yes" if workspace-specific sharing is used.`)
 	if answer == "yes" {
 		if err := setRemoteConsumers(pFlags); err != nil {
 			log.Fatalf("Error: " + err.Error())
@@ -282,7 +282,9 @@ func deleteVariablesFromWorkspace(pFlags PersistentFlags, workspace string, keys
 		v := findVar(currentVars, k)
 		if v == nil {
 			fmt.Printf("variable %s in workspace %s has already been deleted\n", k, workspace)
+			continue
 		}
+		fmt.Printf("deleting %s in workspace %s\n", k, workspace)
 		lib.DeleteVariable(v.ID)
 	}
 }
