@@ -18,12 +18,10 @@ const (
 
 // Persistent flags for multiregion commands
 const (
-	DomainName        = "domain-name"
-	Env               = "env"
-	Region2           = "region2"
-	TfcToken          = "tfc-token"
-	OrgAlternate      = "org-alternate"
-	TfcTokenAlternate = "tfc-token-alternate"
+	DomainName = "domain-name"
+	Env        = "env"
+	Region2    = "region2"
+	TfcToken   = "tfc-token"
 )
 
 func NewStringFlag(command *cobra.Command, name, shorthand string, value, usage string) {
