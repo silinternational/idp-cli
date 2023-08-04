@@ -111,7 +111,7 @@ func (d *DnsCommand) setDnsRecordValues(idpKey string) {
 	}
 
 	supportBotName := "sherlock"
-	if d.env != "prod" {
+	if d.env != envProd {
 		supportBotName = "watson"
 	}
 
