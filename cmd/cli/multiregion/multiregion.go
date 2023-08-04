@@ -29,10 +29,10 @@ func SetupMultiregionCmd(parentCommand *cobra.Command) {
 	InitSetupCmd(multiregionCmd)
 	InitStatusCmd(multiregionCmd)
 
-	flags.NewStringFlag(multiregionCmd, flags.DomainName, "", "Domain name")
-	flags.NewStringFlag(multiregionCmd, flags.Env, envProd, "Execution environment")
-	flags.NewStringFlag(multiregionCmd, flags.Region2, "", "Secondary AWS region")
-	flags.NewStringFlag(multiregionCmd, flags.TfcToken, "", "Token for Terraform Cloud authentication")
+	flags.NewStringFlag(multiregionCmd, flags.DomainName, "", "", "Domain name")
+	flags.NewStringFlag(multiregionCmd, flags.Env, "", envProd, "Execution environment")
+	flags.NewStringFlag(multiregionCmd, flags.Region2, "", "", "Secondary AWS region")
+	flags.NewStringFlag(multiregionCmd, flags.TfcToken, "", "", "Token for Terraform Cloud authentication")
 	flags.NewStringFlag(multiregionCmd, flags.OrgAlternate, "", "Alternate Terraform Cloud organization")
 	flags.NewStringFlag(multiregionCmd, flags.TfcTokenAlternate, "", "Alternate token for Terraform Cloud")
 }

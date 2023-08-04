@@ -30,9 +30,9 @@ in a second AWS region, and to initiate a secondary region failover action.`,
 
 	rootCmd.PersistentFlags().StringVar(&configFile, flags.Config, "", "Config file")
 
-	flags.NewStringFlag(rootCmd, flags.Org, "", requiredPrefix+"Terraform Cloud organization")
-	flags.NewStringFlag(rootCmd, flags.Idp, "", requiredPrefix+"IDP key (short name)")
-	flags.NewStringFlag(rootCmd, flags.Region, "", "AWS region")
+	flags.NewStringFlag(rootCmd, flags.Org, "", "", requiredPrefix+"Terraform Cloud organization")
+	flags.NewStringFlag(rootCmd, flags.Idp, "", "", requiredPrefix+"IDP key (short name)")
+	flags.NewStringFlag(rootCmd, flags.Region, "", "", "AWS region")
 	flags.NewBoolFlag(rootCmd, flags.ReadOnlyMode, "r", false, "read-only mode persists no changes")
 
 	SetupVersionCmd(rootCmd)
