@@ -56,8 +56,8 @@ type PersistentFlags struct {
 func getPersistentFlags() PersistentFlags {
 	pFlags := PersistentFlags{
 		env:             getRequiredParam(flags.Env),
-		idp:             getRequiredParam("idp"),
-		org:             getRequiredParam("org"),
+		idp:             getRequiredParam(flags.Idp),
+		org:             getRequiredParam(flags.Org),
 		tfcToken:        getRequiredParam(flags.TfcToken),
 		secondaryRegion: getRequiredParam(flags.Region2),
 		readOnlyMode:    viper.GetBool(flags.ReadOnlyMode),
