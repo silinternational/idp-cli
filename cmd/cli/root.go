@@ -6,7 +6,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -33,14 +32,8 @@ in a second AWS region, and to initiate a secondary region failover action.`,
 
 	flags.NewStringFlag(rootCmd, flags.Org, "", requiredPrefix+"Terraform Cloud organization")
 	flags.NewStringFlag(rootCmd, flags.Idp, "", requiredPrefix+"IDP key (short name)")
-
-	var readOnly bool
-	rootCmd.PersistentFlags().BoolVarP(&readOnly, flags.ReadOnlyMode, "r", false,
-		`read-only mode persists no changes`,
-	)
-	if err := viper.BindPFlag(flags.ReadOnlyMode, rootCmd.PersistentFlags().Lookup(flags.ReadOnlyMode)); err != nil {
-		log.Fatalln("Error: unable to bind flag:", err)
-	}
+	flags.NewStringFlag(rootCmd, flags.Region, "", "AWS region")
+	flags.NewBoolFlag(rootCmd, flags.ReadOnlyMode, "r", false, "read-only mode persists no changes")
 
 	SetupVersionCmd(rootCmd)
 	multiregion.SetupMultiregionCmd(rootCmd)

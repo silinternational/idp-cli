@@ -33,3 +33,11 @@ func NewStringFlag(command *cobra.Command, name, value, usage string) {
 		log.Fatalln("Error: unable to bind flag:", err)
 	}
 }
+
+func NewBoolFlag(command *cobra.Command, name, shorthand string, value bool, usage string) {
+	var b bool
+	command.PersistentFlags().BoolVarP(&b, name, shorthand, value, usage)
+	if err := viper.BindPFlag(name, command.PersistentFlags().Lookup(name)); err != nil {
+		log.Fatalln("Error: unable to bind flag:", err)
+	}
+}
