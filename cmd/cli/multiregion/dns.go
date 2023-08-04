@@ -13,6 +13,8 @@ import (
 	"github.com/hashicorp/go-tfe"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/silinternational/idp-cli/cmd/cli/flags"
 )
 
 type DnsCommand struct {
@@ -65,7 +67,7 @@ func runDnsCommand(failback bool) {
 func newDnsCommand(pFlags PersistentFlags, failback bool) *DnsCommand {
 	d := DnsCommand{
 		testMode:   pFlags.readOnlyMode,
-		domainName: viper.GetString(flagDomainName),
+		domainName: viper.GetString(flags.DomainName),
 	}
 
 	if d.domainName == "" {
@@ -305,7 +307,7 @@ func (d *DnsCommand) findTfcWorkspace(ctx context.Context, workspaceName string)
 		return
 	}
 
-	fmt.Printf("Workspace %s not found using %s, trying %s\n", workspaceName, flagTfcToken, flagTfcTokenAlternate)
+	fmt.Printf("Workspace %s not found using %s, trying %s\n", workspaceName, flags.TfcToken, flags.TfcTokenAlternate)
 
 	config.Token = d.tfcTokenAlt
 	client, err = tfe.NewClient(config)
@@ -316,7 +318,7 @@ func (d *DnsCommand) findTfcWorkspace(ctx context.Context, workspaceName string)
 
 	w, err = client.Workspaces.Read(ctx, d.tfcOrgAlt, workspaceName)
 	if err != nil {
-		err = fmt.Errorf("error reading Terraform workspace %s using %s: %s", workspaceName, flagTfcTokenAlternate, err)
+		err = fmt.Errorf("error reading Terraform workspace %s using %s: %s", workspaceName, flags.TfcTokenAlternate, err)
 		return
 	}
 
