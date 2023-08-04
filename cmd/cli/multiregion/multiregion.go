@@ -29,41 +29,12 @@ func SetupMultiregionCmd(parentCommand *cobra.Command) {
 	InitSetupCmd(multiregionCmd)
 	InitStatusCmd(multiregionCmd)
 
-	var domainName string
-	multiregionCmd.PersistentFlags().StringVar(&domainName, flags.DomainName, "", "Domain name")
-	if err := viper.BindPFlag(flags.DomainName, multiregionCmd.PersistentFlags().Lookup(flags.DomainName)); err != nil {
-		outputFlagError(multiregionCmd, err)
-	}
-
-	var env string
-	multiregionCmd.PersistentFlags().StringVar(&env, flags.Env, envProd, "Execution environment")
-	if err := viper.BindPFlag(flags.Env, multiregionCmd.PersistentFlags().Lookup(flags.Env)); err != nil {
-		outputFlagError(multiregionCmd, err)
-	}
-
-	var region2 string
-	multiregionCmd.PersistentFlags().StringVar(&region2, flags.Region2, "", "Secondary AWS region")
-	if err := viper.BindPFlag(flags.Region2, multiregionCmd.PersistentFlags().Lookup(flags.Region2)); err != nil {
-		outputFlagError(multiregionCmd, err)
-	}
-
-	var tfcToken string
-	multiregionCmd.PersistentFlags().StringVar(&tfcToken, flags.TfcToken, "", "Token for Terraform Cloud authentication")
-	if err := viper.BindPFlag(flags.TfcToken, multiregionCmd.PersistentFlags().Lookup(flags.TfcToken)); err != nil {
-		outputFlagError(multiregionCmd, err)
-	}
-
-	var orgAlt string
-	multiregionCmd.PersistentFlags().StringVar(&orgAlt, flags.OrgAlternate, "", "Alternate Terraform Cloud organization")
-	if err := viper.BindPFlag(flags.OrgAlternate, multiregionCmd.PersistentFlags().Lookup(flags.OrgAlternate)); err != nil {
-		outputFlagError(multiregionCmd, err)
-	}
-
-	var tfcTokenAlt string
-	multiregionCmd.PersistentFlags().StringVar(&tfcTokenAlt, flags.TfcTokenAlternate, "", "Alternate token for Terraform Cloud")
-	if err := viper.BindPFlag(flags.TfcTokenAlternate, multiregionCmd.PersistentFlags().Lookup(flags.TfcTokenAlternate)); err != nil {
-		outputFlagError(multiregionCmd, err)
-	}
+	flags.NewStringFlag(multiregionCmd, flags.DomainName, "", "Domain name")
+	flags.NewStringFlag(multiregionCmd, flags.Env, envProd, "Execution environment")
+	flags.NewStringFlag(multiregionCmd, flags.Region2, "", "Secondary AWS region")
+	flags.NewStringFlag(multiregionCmd, flags.TfcToken, "", "Token for Terraform Cloud authentication")
+	flags.NewStringFlag(multiregionCmd, flags.OrgAlternate, "", "Alternate Terraform Cloud organization")
+	flags.NewStringFlag(multiregionCmd, flags.TfcTokenAlternate, "", "Alternate token for Terraform Cloud")
 }
 
 func outputFlagError(cmd *cobra.Command, err error) {

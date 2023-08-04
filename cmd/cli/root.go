@@ -31,17 +31,8 @@ in a second AWS region, and to initiate a secondary region failover action.`,
 
 	rootCmd.PersistentFlags().StringVar(&configFile, flags.Config, "", "Config file")
 
-	var org string
-	rootCmd.PersistentFlags().StringVar(&org, flags.Org, "", requiredPrefix+"Terraform Cloud organization")
-	if err := viper.BindPFlag(flags.Org, rootCmd.PersistentFlags().Lookup(flags.Org)); err != nil {
-		log.Fatalln("Error: unable to bind flag:", err)
-	}
-
-	var idp string
-	rootCmd.PersistentFlags().StringVar(&idp, flags.Idp, "", requiredPrefix+"IDP key (short name)")
-	if err := viper.BindPFlag(flags.Idp, rootCmd.PersistentFlags().Lookup(flags.Idp)); err != nil {
-		log.Fatalln("Error: unable to bind flag:", err)
-	}
+	flags.NewStringFlag(rootCmd, flags.Org, "", requiredPrefix+"Terraform Cloud organization")
+	flags.NewStringFlag(rootCmd, flags.Idp, "", requiredPrefix+"IDP key (short name)")
 
 	var readOnly bool
 	rootCmd.PersistentFlags().BoolVarP(&readOnly, flags.ReadOnlyMode, "r", false,

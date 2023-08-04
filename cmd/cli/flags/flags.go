@@ -1,5 +1,12 @@
 package flags
 
+import (
+	"log"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
 // Root-level persistent flags
 const (
 	Config       = "config"
@@ -18,3 +25,11 @@ const (
 	OrgAlternate      = "org-alternate"
 	TfcTokenAlternate = "tfc-token-alternate"
 )
+
+func NewStringFlag(command *cobra.Command, name, value, usage string) {
+	var s string
+	command.PersistentFlags().StringVar(&s, name, value, usage)
+	if err := viper.BindPFlag(name, command.PersistentFlags().Lookup(name)); err != nil {
+		log.Fatalln("Error: unable to bind flag:", err)
+	}
+}
