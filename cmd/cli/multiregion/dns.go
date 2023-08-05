@@ -135,7 +135,7 @@ func (d *DnsCommand) setDnsRecordValues(idpKey string) {
 	}
 
 	for _, record := range dnsRecords {
-		d.setCloudflareCname(record.name, record.value)
+		d.setCloudflareCname(record.name, record.value+"."+d.domainName)
 	}
 }
 
