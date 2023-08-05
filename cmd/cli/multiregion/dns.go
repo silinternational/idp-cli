@@ -129,8 +129,6 @@ func (d *DnsCommand) setDnsRecordValues(idpKey string) {
 		{supportBotName, supportBotName + "-" + region},
 
 		// ECS services
-		{idpKey + "-email", idpKey + "-email-" + region},
-		{idpKey + "-broker", idpKey + "-broker-" + region},
 		{idpKey + "-pw-api", idpKey + "-pw-api-" + region},
 		{idpKey, idpKey + "-" + region},
 		{idpKey + "-sync", idpKey + "-sync-" + region},
