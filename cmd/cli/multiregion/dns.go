@@ -181,6 +181,6 @@ func (d *DnsCommand) setCloudflareCname(name, value string) {
 		Content: value,
 	})
 	if err != nil {
-		fmt.Printf("error updating DNS record %s: %s\nparams: %+v\n", name, err, params)
+		fmt.Printf("error updating DNS record %s: %s\n", name, err)
 	}
 }
