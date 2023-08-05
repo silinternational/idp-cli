@@ -151,10 +151,12 @@ func (d *DnsCommand) setCloudflareCname(name, value string) {
 
 	r, _, err := d.cfClient.ListDNSRecords(ctx, d.cfZone, cloudflare.ListDNSRecordsParams{Name: name + "." + d.domainName})
 	if err != nil {
-		log.Fatalf("error finding DNS record %s: %s", name, err)
+		fmt.Printf("Error: Cloudflare API call failed to find DNS record %s: %s\n", name, err)
+		return
 	}
 	if len(r) != 1 {
-		log.Fatalf("did not find DNS record %s", name)
+		fmt.Printf("Error: did not find DNS record %q in domain %q\n", name, d.domainName)
+		return
 	}
 
 	if r[0].Content == value {
@@ -179,6 +181,6 @@ func (d *DnsCommand) setCloudflareCname(name, value string) {
 		Content: value,
 	})
 	if err != nil {
-		log.Fatalf("error updating DNS record %s: %s", name, err)
+		fmt.Printf("error updating DNS record %s: %s\nparams: %+v\n", name, err, params)
 	}
 }
