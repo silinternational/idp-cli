@@ -29,6 +29,10 @@ func InitSetupCmd(parentCmd *cobra.Command) {
 func runSetup() {
 	pFlags := getPersistentFlags()
 
+	if pFlags.readOnlyMode {
+		fmt.Println("-- Read-only mode enabled --")
+	}
+
 	lib.SetToken(pFlags.tfcToken)
 
 	createSecondaryWorkspaces(pFlags)

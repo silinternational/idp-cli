@@ -56,6 +56,10 @@ func InitDnsCmd(parentCmd *cobra.Command) {
 func runDnsCommand(failback bool) {
 	pFlags := getPersistentFlags()
 
+	if pFlags.readOnlyMode {
+		fmt.Println("-- Read-only mode enabled --")
+	}
+
 	d := newDnsCommand(pFlags, failback)
 
 	d.setDnsRecordValues(pFlags.idp)
