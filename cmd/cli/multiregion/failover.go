@@ -65,6 +65,10 @@ func InitFailoverCmd(parentCmd *cobra.Command) {
 func runFailover() {
 	pFlags := getPersistentFlags()
 
+	if pFlags.readOnlyMode {
+		fmt.Println("-- Read-only mode enabled --")
+	}
+
 	lib.SetToken(pFlags.tfcToken)
 
 	answer := simplePrompt(`Please confirm activation of failover mode. Type "yes" to continue.`)

@@ -56,6 +56,10 @@ func InitDnsCmd(parentCmd *cobra.Command) {
 func runDnsCommand(failback bool) {
 	pFlags := getPersistentFlags()
 
+	if pFlags.readOnlyMode {
+		fmt.Println("-- Read-only mode enabled --")
+	}
+
 	d := newDnsCommand(pFlags, failback)
 
 	d.setDnsRecordValues(pFlags.idp)
@@ -129,15 +133,13 @@ func (d *DnsCommand) setDnsRecordValues(idpKey string) {
 		{supportBotName, supportBotName + "-" + region},
 
 		// ECS services
-		{idpKey + "-email", idpKey + "-email-" + region},
-		{idpKey + "-broker", idpKey + "-broker-" + region},
 		{idpKey + "-pw-api", idpKey + "-pw-api-" + region},
 		{idpKey, idpKey + "-" + region},
 		{idpKey + "-sync", idpKey + "-sync-" + region},
 	}
 
 	for _, record := range dnsRecords {
-		d.setCloudflareCname(record.name, record.value)
+		d.setCloudflareCname(record.name, record.value+"."+d.domainName)
 	}
 }
 
@@ -153,10 +155,12 @@ func (d *DnsCommand) setCloudflareCname(name, value string) {
 
 	r, _, err := d.cfClient.ListDNSRecords(ctx, d.cfZone, cloudflare.ListDNSRecordsParams{Name: name + "." + d.domainName})
 	if err != nil {
-		log.Fatalf("error finding DNS record %s: %s", name, err)
+		fmt.Printf("Error: Cloudflare API call failed to find DNS record %s: %s\n", name, err)
+		return
 	}
 	if len(r) != 1 {
-		log.Fatalf("did not find DNS record %s", name)
+		fmt.Printf("Error: did not find DNS record %q in domain %q\n", name, d.domainName)
+		return
 	}
 
 	if r[0].Content == value {
@@ -179,8 +183,9 @@ func (d *DnsCommand) setCloudflareCname(name, value string) {
 		Type:    "CNAME",
 		Name:    name,
 		Content: value,
+		Comment: r[0].Comment,
 	})
 	if err != nil {
-		log.Fatalf("error updating DNS record %s: %s", name, err)
+		fmt.Printf("error updating DNS record %s: %s\n", name, err)
 	}
 }
