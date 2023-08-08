@@ -6,12 +6,12 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/silinternational/idp-cli/cmd/cli/flags"
 	"github.com/silinternational/idp-cli/cmd/cli/multiregion"
 )
 
@@ -28,27 +28,12 @@ It can be used to check the status of the IdP. It can also be used to establish 
 in a second AWS region, and to initiate a secondary region failover action.`,
 	}
 
-	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "Config file")
+	rootCmd.PersistentFlags().StringVar(&configFile, flags.Config, "", "Config file")
 
-	var org string
-	rootCmd.PersistentFlags().StringVar(&org, "org", "", requiredPrefix+"Terraform Cloud organization")
-	if err := viper.BindPFlag("org", rootCmd.PersistentFlags().Lookup("org")); err != nil {
-		log.Fatalln("Error: unable to bind flag:", err)
-	}
-
-	var idp string
-	rootCmd.PersistentFlags().StringVar(&idp, "idp", "", requiredPrefix+"IDP key (short name)")
-	if err := viper.BindPFlag("idp", rootCmd.PersistentFlags().Lookup("idp")); err != nil {
-		log.Fatalln("Error: unable to bind flag:", err)
-	}
-
-	var readOnly bool
-	rootCmd.PersistentFlags().BoolVarP(&readOnly, "read-only-mode", "r", false,
-		`read-only mode persists no changes`,
-	)
-	if err := viper.BindPFlag("read-only-mode", rootCmd.PersistentFlags().Lookup("read-only-mode")); err != nil {
-		log.Fatalln("Error: unable to bind flag:", err)
-	}
+	flags.NewStringFlag(rootCmd, flags.Org, "", "", requiredPrefix+"Terraform Cloud organization")
+	flags.NewStringFlag(rootCmd, flags.Idp, "", "", requiredPrefix+"IDP key (short name)")
+	flags.NewStringFlag(rootCmd, flags.Region, "", "", "AWS region")
+	flags.NewBoolFlag(rootCmd, flags.ReadOnlyMode, "r", false, "read-only mode persists no changes")
 
 	SetupVersionCmd(rootCmd)
 	multiregion.SetupMultiregionCmd(rootCmd)

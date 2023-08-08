@@ -10,15 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-)
 
-const (
-	flagDomainName        = "domain-name"
-	flagEnv               = "env"
-	flagRegion2           = "region2"
-	flagTfcToken          = "tfc-token"
-	flagOrgAlternate      = "org-alternate"
-	flagTfcTokenAlternate = "tfc-token-alternate"
+	"github.com/silinternational/idp-cli/cmd/cli/flags"
 )
 
 const envProd = "prod"
@@ -36,41 +29,10 @@ func SetupMultiregionCmd(parentCommand *cobra.Command) {
 	InitSetupCmd(multiregionCmd)
 	InitStatusCmd(multiregionCmd)
 
-	var domainName string
-	multiregionCmd.PersistentFlags().StringVar(&domainName, flagDomainName, "", "Domain name")
-	if err := viper.BindPFlag(flagDomainName, multiregionCmd.PersistentFlags().Lookup(flagDomainName)); err != nil {
-		outputFlagError(multiregionCmd, err)
-	}
-
-	var env string
-	multiregionCmd.PersistentFlags().StringVar(&env, flagEnv, envProd, "Execution environment")
-	if err := viper.BindPFlag(flagEnv, multiregionCmd.PersistentFlags().Lookup(flagEnv)); err != nil {
-		outputFlagError(multiregionCmd, err)
-	}
-
-	var region2 string
-	multiregionCmd.PersistentFlags().StringVar(&region2, flagRegion2, "", "Secondary AWS region")
-	if err := viper.BindPFlag(flagRegion2, multiregionCmd.PersistentFlags().Lookup(flagRegion2)); err != nil {
-		outputFlagError(multiregionCmd, err)
-	}
-
-	var tfcToken string
-	multiregionCmd.PersistentFlags().StringVar(&tfcToken, flagTfcToken, "", "Token for Terraform Cloud authentication")
-	if err := viper.BindPFlag(flagTfcToken, multiregionCmd.PersistentFlags().Lookup(flagTfcToken)); err != nil {
-		outputFlagError(multiregionCmd, err)
-	}
-
-	var orgAlt string
-	multiregionCmd.PersistentFlags().StringVar(&orgAlt, flagOrgAlternate, "", "Alternate Terraform Cloud organization")
-	if err := viper.BindPFlag(flagOrgAlternate, multiregionCmd.PersistentFlags().Lookup(flagOrgAlternate)); err != nil {
-		outputFlagError(multiregionCmd, err)
-	}
-
-	var tfcTokenAlt string
-	multiregionCmd.PersistentFlags().StringVar(&tfcTokenAlt, flagTfcTokenAlternate, "", "Alternate token for Terraform Cloud")
-	if err := viper.BindPFlag(flagTfcTokenAlternate, multiregionCmd.PersistentFlags().Lookup(flagTfcTokenAlternate)); err != nil {
-		outputFlagError(multiregionCmd, err)
-	}
+	flags.NewStringFlag(multiregionCmd, flags.DomainName, "", "", "Domain name")
+	flags.NewStringFlag(multiregionCmd, flags.Env, "", envProd, "Execution environment")
+	flags.NewStringFlag(multiregionCmd, flags.Region2, "", "", "Secondary AWS region")
+	flags.NewStringFlag(multiregionCmd, flags.TfcToken, "", "", "Token for Terraform Cloud authentication")
 }
 
 func outputFlagError(cmd *cobra.Command, err error) {
@@ -82,32 +44,21 @@ type PersistentFlags struct {
 	env             string
 	idp             string
 	org             string
-	orgAlt          string
 	readOnlyMode    bool
+	region          string
 	secondaryRegion string
 	tfcToken        string
-	tfcTokenAlt     string
 }
 
 func getPersistentFlags() PersistentFlags {
 	pFlags := PersistentFlags{
-		env:             getRequiredParam(flagEnv),
-		idp:             getRequiredParam("idp"),
-		org:             getRequiredParam("org"),
-		tfcToken:        getRequiredParam(flagTfcToken),
-		secondaryRegion: getRequiredParam(flagRegion2),
-		readOnlyMode:    viper.GetBool("read-only-mode"),
-		tfcTokenAlt:     getOption(flagTfcTokenAlternate, ""),
-		orgAlt:          getOption(flagOrgAlternate, viper.GetString(flagOrgAlternate)),
-	}
-
-	if pFlags.orgAlt != "" && pFlags.tfcTokenAlt == "" {
-		log.Fatalf("%[1]s was specified without %[2]s. Please include %[2]s or remove %[1]s.",
-			flagOrgAlternate, flagTfcTokenAlternate)
-	}
-
-	if pFlags.orgAlt == "" {
-		pFlags.orgAlt = pFlags.org
+		env:             getRequiredParam(flags.Env),
+		idp:             getRequiredParam(flags.Idp),
+		org:             getRequiredParam(flags.Org),
+		tfcToken:        getRequiredParam(flags.TfcToken),
+		region:          getRequiredParam(flags.Region),
+		secondaryRegion: getRequiredParam(flags.Region2),
+		readOnlyMode:    viper.GetBool(flags.ReadOnlyMode),
 	}
 
 	return pFlags

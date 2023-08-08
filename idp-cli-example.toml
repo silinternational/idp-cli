@@ -19,35 +19,14 @@ org = "my-tfc-org"
 # Terraform Cloud token.
 tfc-token = ""
 
-# Alternate Terraform org and token. If provided, the alternates will be used in case the primary fails.
-org-alternate = ""
-tfc-token-alternate = ""
-
 # -------------------------------------------------------------------------------------------------
 # These additional parameters are for the "multiregion dns" command.
+
+# AWS primary region
+region = "us-east-1"
 
 # "domain-name" is required
 domain-name = "example.net"
 
 # "cloudflare-token" is required and must have edit permission on the domain name specified in "domain-name"
 cloudflare-token = ""
-
-# The following are the values to set DNS CNAME records. If any DNS value is omitted, the "multiregion dns" command
-# will skip that record update.
-
-# "mfa-api" is the TOTP API, also known as serverless-mfa-api.
-mfa-api-value = "abcde01234.execute-api.us-west-2.amazonaws.com"
-
-# "twosv-api" is the Webauthn API, also known as serverless-mfa-api-go.
-twosv-api-value = "abcde12345.execute-api.us-west-2.amazonaws.com"
-
-# "support-bot" is the idp-support-bot API that is configured in the Slack API dashboard.
-support-bot-value = "abcde23456.execute-api.us-west-2.amazonaws.com"
-
-# These are the DNS values for each of the ECS services. If omitted, the value will be read from the
-# Terraform Cloud "010-cluster" workspace output.
-email-service-value = "internal-alb-idp-myidp-prod-int-123456789.us-west-2.elb.amazonaws.com"
-id-broker-value = "internal-alb-idp-myidp-prod-int-123456789.us-west-2.elb.amazonaws.com"
-pw-api-value = "alb-idp-myidp-prod-987654321-us-west-2.elb.amazonaws.com"
-ssp-value = "alb-idp-myidp-prod-987654321-us-west-2.elb.amazonaws.com"
-id-sync-value = "alb-idp-myidp-prod-987654321-us-west-2.elb.amazonaws.com"
