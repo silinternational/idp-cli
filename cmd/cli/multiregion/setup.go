@@ -236,13 +236,7 @@ func setMultiregionVariables(pFlags PersistentFlags) {
 func deleteUnusedVariables(pFlags PersistentFlags) {
 	fmt.Println("\nDeleting unused variables...")
 
-	deleteVariablesFromWorkspace(pFlags, clusterWorkspace(pFlags), []string{
-		"aws_region",
-		"app_name",
-	})
 	deleteVariablesFromWorkspace(pFlags, databaseSecondaryWorkspace(pFlags), []string{
-		"aws_region",
-		"app_name",
 		"backup_retention_period",
 		"multi_az",
 		"skip_final_snapshot",
