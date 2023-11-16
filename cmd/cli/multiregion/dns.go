@@ -17,14 +17,15 @@ import (
 )
 
 type DnsCommand struct {
-	cfClient   *cloudflare.API
-	cfZone     *cloudflare.ResourceContainer
-	domainName string
-	env        string
-	failback   bool
-	region     string
-	region2    string
-	testMode   bool
+	cfClient      *cloudflare.API
+	cfZone        *cloudflare.ResourceContainer
+	domainName    string
+	env           string
+	failback      bool
+	includeCommon bool
+	region        string
+	region2       string
+	testMode      bool
 }
 
 type DnsValues struct {
@@ -36,14 +37,14 @@ type DnsValues struct {
 }
 
 func InitDnsCmd(parentCmd *cobra.Command) {
-	var failback bool
+	var failback, includeCommon bool
 
 	cmd := &cobra.Command{
 		Use:   "dns",
 		Short: "DNS Failover and Failback",
 		Long:  `Configure DNS CNAME values for primary or secondary region hostnames. Default is failover, use --failback to switch back to the primary region.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			runDnsCommand(failback)
+			runDnsCommand(failback, includeCommon)
 		},
 	}
 	parentCmd.AddCommand(cmd)
@@ -51,21 +52,24 @@ func InitDnsCmd(parentCmd *cobra.Command) {
 	cmd.PersistentFlags().BoolVar(&failback, "failback", false,
 		`set DNS records to switch back to primary`,
 	)
+	cmd.PersistentFlags().BoolVar(&includeCommon, "include-common", false,
+		`also set DNS records for services used by every IdP`,
+	)
 }
 
-func runDnsCommand(failback bool) {
+func runDnsCommand(failback, includeCommon bool) {
 	pFlags := getPersistentFlags()
 
 	if pFlags.readOnlyMode {
 		fmt.Println("-- Read-only mode enabled --")
 	}
 
-	d := newDnsCommand(pFlags, failback)
+	d := newDnsCommand(pFlags, failback, includeCommon)
 
 	d.setDnsRecordValues(pFlags.idp)
 }
 
-func newDnsCommand(pFlags PersistentFlags, failback bool) *DnsCommand {
+func newDnsCommand(pFlags PersistentFlags, failback, includeCommon bool) *DnsCommand {
 	d := DnsCommand{
 		testMode:   pFlags.readOnlyMode,
 		domainName: viper.GetString(flags.DomainName),
@@ -98,6 +102,7 @@ func newDnsCommand(pFlags PersistentFlags, failback bool) *DnsCommand {
 	d.region2 = pFlags.secondaryRegion
 
 	d.failback = failback
+	d.includeCommon = includeCommon
 
 	return &d
 }
@@ -119,10 +124,19 @@ func (d *DnsCommand) setDnsRecordValues(idpKey string) {
 		supportBotName = "watson"
 	}
 
-	dnsRecords := []struct {
+	type nameValuePair struct {
 		name  string
 		value string
-	}{
+	}
+
+	dnsRecords := []nameValuePair{
+		// ECS services
+		{idpKey + "-pw-api", idpKey + "-pw-api-" + region},
+		{idpKey, idpKey + "-" + region},
+		{idpKey + "-sync", idpKey + "-sync-" + region},
+	}
+
+	common := []nameValuePair{
 		// "mfa-api" is the TOTP API, also known as serverless-mfa-api
 		{"mfa-api", "mfa-api-" + region},
 
@@ -131,11 +145,10 @@ func (d *DnsCommand) setDnsRecordValues(idpKey string) {
 
 		// this is the idp-support-bot API that is configured in the Slack API dashboard
 		{supportBotName, supportBotName + "-" + region},
+	}
 
-		// ECS services
-		{idpKey + "-pw-api", idpKey + "-pw-api-" + region},
-		{idpKey, idpKey + "-" + region},
-		{idpKey + "-sync", idpKey + "-sync-" + region},
+	if d.includeCommon {
+		dnsRecords = append(dnsRecords, common...)
 	}
 
 	for _, record := range dnsRecords {
