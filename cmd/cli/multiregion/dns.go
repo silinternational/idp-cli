@@ -133,7 +133,6 @@ func (d *DnsCommand) setDnsRecordValues(idpKey string) {
 		// ECS services
 		{idpKey + "-pw-api", idpKey + "-pw-api-" + region},
 		{idpKey, idpKey + "-" + region},
-		{idpKey + "-sync", idpKey + "-sync-" + region},
 	}
 
 	common := []nameValuePair{
