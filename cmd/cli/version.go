@@ -23,6 +23,7 @@ var versionCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if version != "" {
 			fmt.Printf("Version %s\n", version)
+			return
 		}
 
 		buildInfo, ok := debug.ReadBuildInfo()
