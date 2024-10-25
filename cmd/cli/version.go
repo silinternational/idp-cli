@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"runtime/debug"
 
 	"github.com/spf13/cobra"
 )
@@ -14,12 +15,22 @@ func SetupVersionCmd(parentCommand *cobra.Command) {
 }
 
 // version is set at build time
-var version = "(unknown)"
+var version = ""
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show idp-cli version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("Version %s\n", version)
+		if version != "" {
+			fmt.Printf("Version %s\n", version)
+		}
+
+		buildInfo, ok := debug.ReadBuildInfo()
+		if ok {
+			fmt.Println("Version:", buildInfo.Main.Version)
+			return
+		}
+
+		fmt.Println("Version: unknown")
 	},
 }
