@@ -195,7 +195,7 @@ func (d *DnsCommand) setCloudflareCname(name, value string) {
 		Type:    "CNAME",
 		Name:    name,
 		Content: value,
-		Comment: r[0].Comment,
+		Comment: cloudflare.StringPtr(r[0].Comment),
 	})
 	if err != nil {
 		fmt.Printf("error updating DNS record %s: %s\n", name, err)
