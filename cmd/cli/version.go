@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"runtime/debug"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -22,12 +23,13 @@ var versionCmd = &cobra.Command{
 	Short: "Show idp-cli version",
 	Run: func(cmd *cobra.Command, args []string) {
 		if version != "" {
-			fmt.Printf("Version %s\n", version)
+			fmt.Println("Version:", version)
+			return
 		}
 
 		buildInfo, ok := debug.ReadBuildInfo()
 		if ok {
-			fmt.Println("Version:", buildInfo.Main.Version)
+			fmt.Println("Version:", strings.TrimLeft(buildInfo.Main.Version, "v"))
 			return
 		}
 
