@@ -131,6 +131,7 @@ func (d *DnsCommand) setDnsRecordValues(idpKey string) {
 
 	dnsRecords := []nameValuePair{
 		// ECS services
+		{idpKey + "-id-broker", idpKey + "-id-broker-" + region},
 		{idpKey + "-pw-api", idpKey + "-pw-api-" + region},
 		{idpKey, idpKey + "-" + region},
 	}
